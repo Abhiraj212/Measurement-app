@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Scan Document - Seema Boutique</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js'></script>
+</head>
+<body>
+    <div class="app">
+        <header class="page-header compact">
+            <a href="add-customer.html" class="back-btn">← Back</a>
+            <h1 class="page-title">📷 Scan Document</h1>
+            <div style="width: 60px;"></div>
+        </header>
+
+        <div class="scan-container">
+            <div class="scan-intro">
+                <div class="scan-icon">📸</div>
+                <h2>Scan Measurements</h2>
+                <p>Take a photo of handwritten measurements or business cards. AI will extract the data.</p>
+            </div>
+
+            <div class="scan-options">
+                <button class="scan-btn" onclick="document.getElementById('cameraInput').click()">
+                    <span>📷</span>
+                    <span>Take Photo</span>
+                </button>
+                <button class="scan-btn secondary" onclick="document.getElementById('galleryInput').click()">
+                    <span>🖼️</span>
+                    <span>From Gallery</span>
+                </button>
+                <input type="file" id="cameraInput" accept="image/*" capture="environment" hidden onchange="processImage(event)">
+                <input type="file" id="galleryInput" accept="image/*" hidden onchange="processImage(event)">
+            </div>
+
+            <div class="scan-progress hidden" id="scanProgress">
+                <div class="progress-ring">
+                    <svg viewBox="0 0 100 100">
+                        <circle class="progress-bg" cx="50" cy="50" r="45"/>
+                        <circle class="progress-bar" id="progressCircle" cx="50" cy="50" r="45"/>
+                    </svg>
+                    <div class="progress-text" id="progressText">0%</div>
+                </div>
+                <p>Reading document...</p>
+            </div>
+
+            <div class="scan-result hidden" id="scanResult">
+                <h3>📄 Extracted Data</h3>
+                <div class="extracted-data" id="extractedData">
+                    <!-- Populated by JS -->
+                </div>
+                <div class="result-actions">
+                    <button class="btn btn-secondary" onclick="resetScan()">🔄 Scan Again</button>
+                    <button class="btn btn-primary" onclick="useData()">✅ Use This Data</button>
+                </div>
+            </div>
+
+            <div class="scan-tips">
+                <h4>💡 Tips for best results:</h4>
+                <ul>
+                    <li>Ensure good lighting</li>
+                    <li>Keep the document flat</li>
+                    <li>Make sure text is clearly visible</li>
+                    <li>Hold camera steady</li>
+                </ul>
+            </div>
+        </div>
+
+        <nav class="bottom-nav">
+            <a href="index.html" class="nav-item" data-page="home">
+                <span class="nav-icon">🏠</span>
+                <span>Home</span>
+            </a>
+            <a href="customers.html" class="nav-item" data-page="customers">
+                <span class="nav-icon">👥</span>
+                <span>Customers</span>
+            </a>
+            <a href="add-customer.html" class="nav-item nav-item-main" data-page="add">
+                <span class="nav-icon-main">➕</span>
+            </a>
+            <a href="chat.html" class="nav-item" data-page="chat">
+                <span class="nav-icon">💬</span>
+                <span>Chat</span>
+            </a>
+            <a href="settings.html" class="nav-item" data-page="settings">
+                <span class="nav-icon">⚙️</span>
+                <span>More</span>
+            </a>
+        </nav>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+    <script>
+        let extractedData = {};
+
+        async function processImage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            document.getElementById('scanProgress').classList.remove('hidden');
+            document.querySelector('.scan-options').classList.add('hidden');
+            document.querySelector('.scan-tips').classList.add('hidden');
+
+            try {
+                const result = await Tesseract.recognize(
+                    file,
+                    'eng',
+                    {
+                        logger: m => {
+                            if (m.status === 'recognizing text') {
+                                updateProgress(m.progress);
+                            }
+                        }
+                    }
+                );
+
+                processExtractedText(result.data.text);
+            } catch (err) {
+                showToast('Error scanning: ' + err.message, 'error');
+                resetScan();
+            }
+
+            event.target.value = '';
+        }
+
+        function updateProgress(progress) {
+            const percent = Math.round(progress * 100);
+            document.getElementById('progressText').textContent = percent + '%';
+            const circle = document.getElementById('progressCircle');
+            const circumference = 2 * Math.PI * 45;
+            circle.style.strokeDashoffset = circumference - (progress * circumference);
+        }
+
+        function processExtractedText(text) {
+            console.log('Extracted:', text);
+            
+            extractedData = {};
+            
+            // Extract measurements
+            const patterns = {
+                name: /name[:\s]+([^\n]+)/i,
+                phone: /(?:phone|mobile|tel)[:\s]+([\d\s\-+]+)/i,
+                chest: /chest[:\s]+(\d+\.?\
+                    \d*)/i,
+                waist: /waist[:\s]+(\d+\.?\d*)/i,
+                hip: /hip[:\s]+(\d+\.?\d*)/i,
+                length: /length[:\s]+(\d+\.?\d*)/i,
+                sleeve: /sleeve[:\s]+(\d+\.?\d*)/i,
+                shoulder: /shoulder[:\s]+(\d+\.?\d*)/i,
+                total: /(?:total|amount)[:\s]+(?:₹)?(\d+)/i,
+                advance: /advance[:\s]+(?:₹)?(\d+)/i
+            };
+            
+            for (const [key, pattern] of Object.entries(patterns)) {
+                const match = text.match(pattern);
+                if (match) {
+                    extractedData[key] = match[1].trim();
+                }
+            }
+            
+            // Try to find any phone number if not matched
+            if (!extractedData.phone) {
+                const phoneMatch = text.match(/(\+?\d[\d\s\-]{9,})/);
+                if (phoneMatch) extractedData.phone = phoneMatch[1].replace(/\s/g, '');
+            }
+            
+            // Try to find first line as name if not matched
+            if (!extractedData.name) {
+                const lines = text.split('\n').filter(l => l.trim());
+                if (lines.length > 0 && !lines[0].match(/^\d/)) {
+                    extractedData.name = lines[0].trim();
+                }
+            }
+            
+            displayResults();
+        }
+
+        function displayResults() {
+            document.getElementById('scanProgress').classList.add('hidden');
+            document.getElementById('scanResult').classList.remove('hidden');
+            
+            const container = document.getElementById('extractedData');
+            let html = '';
+            
+            const icons = {
+                name: '👤', phone: '📞', chest: '📏', waist: '📏', hip: '📏',
+                length: '📏', sleeve: '📏', shoulder: '📏', total: '💰', advance: '💵'
+            };
+            
+            const labels = {
+                name: 'Name', phone: 'Phone', chest: 'Chest', waist: 'Waist', hip: 'Hip',
+                length: 'Length', sleeve: 'Sleeve', shoulder: 'Shoulder', total: 'Total Amount', advance: 'Advance'
+            };
+            
+            let hasData = false;
+            for (const [key, value] of Object.entries(extractedData)) {
+                hasData = true;
+                html += `
+                    <div class="data-row">
+                        <span class="data-icon">${icons[key] || '📝'}</span>
+                        <span class="data-label">${labels[key] || key}</span>
+                        <span class="data-value">${value}</span>
+                        <button class="edit-value-btn" onclick="editValue('${key}')">✏️</button>
+                    </div>
+                `;
+            }
+            
+            if (!hasData) {
+                html = '<p class="no-data">No clear data found. Try scanning again with better lighting.</p>';
+            }
+            
+            container.innerHTML = html;
+        }
+
+        function editValue(key) {
+            const newValue = prompt(`Edit ${key}:`, extractedData[key] || '');
+            if (newValue !== null) {
+                extractedData[key] = newValue;
+                displayResults();
+            }
+        }
+
+        function resetScan() {
+            document.getElementById('scanResult').classList.add('hidden');
+            document.querySelector('.scan-options').classList.remove('hidden');
+            document.querySelector('.scan-tips').classList.remove('hidden');
+            extractedData = {};
+        }
+
+        function useData() {
+            // Store in sessionStorage for add-customer page
+            sessionStorage.setItem('scannedData', JSON.stringify(extractedData));
+            window.location.href = 'add-customer.html?scanned=true';
+        }
+    </script>
+</body>
+</html>

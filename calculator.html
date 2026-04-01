@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Price Calculator - Seema Boutique</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app">
+        <header class="page-header compact">
+            <a href="add-customer.html" class="back-btn">← Back</a>
+            <h1 class="page-title">🧮 Calculator</h1>
+            <button class="icon-btn" onclick="resetCalc()">🔄</button>
+        </header>
+
+        <div class="calculator-container">
+            <!-- Quick Presets -->
+            <div class="calc-presets">
+                <h3>Quick Presets</h3>
+                <div class="preset-grid">
+                    <button class="preset-btn" onclick="applyPreset('shirt')">👔 Shirt<br><small>₹500-800</small></button>
+                    <button class="preset-btn" onclick="applyPreset('pant')">👖 Pant<br><small>₹400-600</small></button>
+                    <button class="preset-btn" onclick="applyPreset('suit')">🤵 Suit<br><small>₹2000+</small></button>
+                    <button class="preset-btn" onclick="applyPreset('lehenga')">👗 Lehenga<br><small>₹3000+</small></button>
+                </div>
+            </div>
+
+            <!-- Cost Inputs -->
+            <div class="calc-section">
+                <h3>Cost Breakdown</h3>
+                
+                <div class="calc-input-group">
+                    <label>Fabric Cost (₹)</label>
+                    <div class="input-with-actions">
+                        <input type="number" id="fabricCost" placeholder="0" oninput="calculate()">
+                        <button class="input-action" onclick="adjustValue('fabricCost', -10)">-</button>
+                        <button class="input-action" onclick="adjustValue('fabricCost', 10)">+</button>
+                    </div>
+                </div>
+
+                <div class="calc-input-group">
+                    <label>Stitching Charges (₹)</label>
+                    <div class="input-with-actions">
+                        <input type="number" id="stitchingCost" placeholder="0" oninput="calculate()">
+                        <button class="input-action" onclick="adjustValue('stitchingCost', -50)">-</button>
+                        <button class="input-action" onclick="adjustValue('stitchingCost', 50)">+</button>
+                    </div>
+                </div>
+
+                <div class="calc-input-group">
+                    <label>Extras (Buttons, Thread, etc)</label>
+                    <div class="input-with-actions">
+                        <input type="number" id="extrasCost" placeholder="0" oninput="calculate()">
+                        <button class="input-action" onclick="adjustValue('extrasCost', -10)">-</button>
+                        <button class="input-action" onclick="adjustValue('extrasCost', 10)">+</button>
+                    </div>
+                </div>
+
+                <div class="calc-input-group">
+                    <label>Other Costs (₹)</label>
+                    <input type="number" id="otherCost" placeholder="0" oninput="calculate()">
+                </div>
+            </div>
+
+            <!-- Margin Settings -->
+            <div class="calc-section">
+                <h3>Profit Margin</h3>
+                <div class="margin-presets">
+                    <button class="margin-btn" onclick="setMargin(20)">20%</button>
+                    <button class="margin-btn active" onclick="setMargin(30)">30%</button>
+                    <button class="margin-btn" onclick="setMargin(40)">40%</button>
+                    <button class="margin-btn" onclick="setMargin(50)">50%</button>
+                </div>
+                <div class="margin-slider">
+                    <input type="range" id="marginSlider" min="0" max="100" value="30" oninput="updateMargin(this.value)">
+                    <span id="marginValue">30%</span>
+                </div>
+            </div>
+
+            <!-- Results -->
+            <div class="calc-results">
+                <div class="result-row">
+                    <span>Total Cost:</span>
+                    <strong id="totalCost">₹0</strong>
+                </div>
+                <div class="result-row">
+                    <span>Profit:</span>
+                    <strong id="profitAmount">₹0</strong>
+                </div>
+                <div class="result-divider"></div>
+                <div class="result-final">
+                    <span>Suggested Price:</span>
+                    <div class="final-price" id="finalPrice">₹0</div>
+                </div>
+                <div class="result-alternate">
+                    <span>Round to nearest 10:</span>
+                    <strong id="roundedPrice">₹0</strong>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="calc-actions">
+                <button class="btn btn-secondary btn-full" onclick="saveAsTemplate()">
+                    💾 Save as Template
+                </button>
+                <button class="btn btn-primary btn-full" onclick="useForCustomer()">
+                    ✅ Use for New Customer
+                </button>
+            </div>
+
+            <!-- History -->
+            <div class="calc-history" id="calcHistory">
+                <h3>Recent Calculations</h3>
+                <div id="historyList"></div>
+            </div>
+        </div>
+
+        <nav class="bottom-nav">
+            <a href="index.html" class="nav-item" data-page="home">
+                <span class="nav-icon">🏠</span>
+                <span>Home</span>
+            </a>
+            <a href="customers.html" class="nav-item" data-page="customers">
+                <span class="nav-icon">👥</span>
+                <span>Customers</span>
+            </a>
+            <a href="add-customer.html" class="nav-item nav-item-main" data-page="add">
+                <span class="nav-icon-main">➕</span>
+            </a>
+            <a href="chat.html" class="nav-item" data-page="chat">
+                <span class="nav-icon">💬</span>
+                <span>Chat</span>
+            </a>
+            <a href="settings.html" class="nav-item" data-page="settings">
+                <span class="nav-icon">⚙️</span>
+                <span>More</span>
+            </a>
+        </nav>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+    <script>
+        let currentMargin = 30;
+        let calculationHistory = JSON.parse(localStorage.getItem('calcHistory') || '[]');
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadHistory();
+            
+            // Check if we have preset from URL
+            const params = new URLSearchParams(window.location.search);
+            if (params.has('preset')) {
+                applyPreset(params.get('preset'));
+            }
+        });
+
+        function calculate() {
+            const fabric = parseFloat(document.getElementById('fabricCost').value) || 0;
+            const stitching = parseFloat(document.getElementById('stitchingCost').value) || 0;
+            const extras = parseFloat(document.getElementById('extrasCost').value) || 0;
+            const other = parseFloat(document.getElementById('otherCost').value) || 0;
+            
+            const totalCost = fabric + stitching + extras + other;
+            const profit = totalCost * (currentMargin / 100);
+            const finalPrice = totalCost + profit;
+            const rounded = Math.ceil(finalPrice / 10) * 10;
+            
+            document.getElementById('totalCost').textContent = '₹' + totalCost.toLocaleString();
+            document.getElementById('profitAmount').textContent = '₹' + Math.round(profit).toLocaleString();
+            document.getElementById('finalPrice').textContent = '₹' + Math.round(finalPrice).toLocaleString();
+            document.getElementById('roundedPrice').textContent = '₹' + rounded.toLocaleString();
+            
+            // Animate price change
+            document.getElementById('finalPrice').classList.add('price-pulse');
+            setTimeout(() => document.getElementById('finalPrice').classList.remove('price-pulse'), 300);
+        }
+
+        function adjustValue(id, delta) {
+            const input = document.getElementById(id);
+            const current = parseFloat(input.value) || 0;
+            input.value = Math.max(0, current + delta);
+            calculate();
+        }
+
+        function setMargin(margin) {
+            currentMargin = margin;
+            document.getElementById('marginSlider').value = margin;
+            document.getElementById('marginValue').textContent = margin + '%';
+            
+            document.querySelectorAll('.margin-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent === margin + '%');
+            });
+            
+            calculate();
+        }
+
+        function updateMargin(value) {
+            currentMargin = parseInt(value);
+            document.getElementById('marginValue').textContent = value + '%';
+            document.querySelectorAll('.margin-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            calculate();
+        }
+
+        function applyPreset(type) {
+            const presets = {
+                shirt: { fabric: 300, stitching: 400, extras: 50 },
+                pant: { fabric: 400, stitching: 350, extras: 50 },
+                suit: { fabric: 1500, stitching: 800, extras: 200 },
+                lehenga: { fabric: 2000, stitching: 1200, extras: 300 }
+            };
+            
+            const p = presets[type];
+            if (p) {
+                document.getElementById('fabricCost').value = p.fabric;
+                document.getElementById('stitchingCost').value = p.stitching;
+                document.getElementById('extrasCost').value = p.extras;
+                calculate();
+                showToast(`${type.charAt(0).toUpperCase() + type.slice(1)} preset loaded`, 'success');
+            }
+        }
+
+        function saveAsTemplate() {
+            const name = prompt('Name this template:');
+            if (!name) return;
+            
+            const template = {
+                name: name,
+                fabric: document.getElementById('fabricCost').value,
+                stitching: document.getElementById('stitchingCost').value,
+                extras: document.getElementById('extrasCost').value,
+                margin: currentMargin
+            };
+            
+            const templates = JSON.parse(localStorage.getItem('priceTemplates') || '[]');
+            templates.push(template);
+            localStorage.setItem('priceTemplates', JSON.stringify(templates));
+            
+            showToast('Template saved', 'success');
+        }
+
+        function useForCustomer() {
+            const finalPrice = document.getElementById('finalPrice').textContent.replace(/[₹,]/g, '');
+            sessionStorage.setItem('calculatedPrice', finalPrice);
+            window.location.href = 'add-customer.html?calculated=true';
+        }
+
+        function resetCalc() {
+            document.getElementById('fabricCost').value = '';
+            document.getElementById('stitchingCost').value = '';
+            document.getElementById('extrasCost').value = '';
+            document.getElementById('otherCost').value = '';
+            setMargin(30);
+        }
+
+        function saveToHistory() {
+            const calc = {
+                date: new Date().toISOString(),
+                fabric: document.getElementById('fabricCost').value,
+                stitching: document.getElementById('stitchingCost').value,
+                extras: document.getElementById('extrasCost').value,
+                margin: currentMargin,
+                final: document.getElementById('finalPrice').textContent
+            };
+            
+            calculationHistory.unshift(calc);
+            if (calculationHistory.length > 10) calculationHistory.pop();
+            
+            localStorage.setItem('calcHistory', JSON.stringify(calculationHistory));
+            loadHistory();
+        }
+
+        function loadHistory() {
+            const list = document.getElementById('historyList');
+            if (calculationHistory.length === 0) {
+                list.innerHTML = '<p class="empty-history">No calculations yet</p>';
+                return;
+            }
+            
+            list.innerHTML = calculationHistory.slice(0, 5).map(h => `
+                <div class="history-item" onclick="loadHistoryItem('${h.date}')">
+                    <span>${new Date(h.date).toLocaleDateString()}</span>
+                    <strong>${h.final}</strong>
+                </div>
+            `).join('');
+        }
+
+        function loadHistoryItem(date) {
+            const item = calculationHistory.find(h => h.date === date);
+            if (!item) return;
+            
+            document.getElementById('fabricCost').value = item.fabric;
+            document.getElementById('stitchingCost').value = item.stitching;
+            document.getElementById('extrasCost').value = item.extras;
+            setMargin(item.margin);
+            calculate();
+        }
+    </script>
+</body>
+</html>

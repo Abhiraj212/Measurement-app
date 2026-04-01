@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Chat Mode - Seema Boutique</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app">
+        <header class="chat-header">
+            <a href="customers.html" class="back-btn">←</a>
+            <div class="chat-title">
+                <div class="chat-avatar">🤖</div>
+                <div>
+                    <h3>Seema Assistant</h3>
+                    <small>Online</small>
+                </div>
+            </div>
+            <button class="icon-btn" onclick="resetChat()">🔄</button>
+        </header>
+
+        <div class="chat-messages" id="chatMessages">
+            <div class="welcome-message">
+                <h2>👋 Hi! I'm your assistant</h2>
+                <p>I can help you add customers quickly. Just answer my questions!</p>
+            </div>
+        </div>
+
+        <div class="chat-input-area">
+            <div class="quick-replies" id="quickReplies">
+                <!-- Dynamic quick replies -->
+            </div>
+            <div class="input-row">
+                <input type="text" id="chatInput" placeholder="Type your answer..." autocomplete="off">
+                <button onclick="sendMessage()" id="sendBtn">➤</button>
+            </div>
+        </div>
+
+        <nav class="bottom-nav">
+            <a href="index.html" class="nav-item" data-page="home">
+                <span class="nav-icon">🏠</span>
+                <span>Home</span>
+            </a>
+            <a href="customers.html" class="nav-item" data-page="customers">
+                <span class="nav-icon">👥</span>
+                <span>Customers</span>
+            </a>
+            <a href="add-customer.html" class="nav-item nav-item-main" data-page="add">
+                <span class="nav-icon-main">➕</span>
+            </a>
+            <a href="chat.html" class="nav-item active" data-page="chat">
+                <span class="nav-icon">💬</span>
+                <span>Chat</span>
+            </a>
+            <a href="settings.html" class="nav-item" data-page="settings">
+                <span class="nav-icon">⚙️</span>
+                <span>More</span>
+            </a>
+        </nav>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+    <script>
+        let chatStep = 0;
+        let customerData = {};
+        
+        const steps = [
+            {
+                question: "What's the customer's name?",
+                field: 'name',
+                validate: v => v.length >= 2,
+                error: "Please enter a valid name (at least 2 characters)"
+            },
+            {
+                question: "What's their phone number?",
+                field: 'phone',
+                validate: v => v.length >= 10,
+                error: "Please enter a valid phone number"
+            },
+            {
+                question: "What dress are they ordering?",
+                field: 'dressType',
+                type: 'choice',
+                choices: ['Shirt', 'Pant', 'Suit', 'Lehenga', 'Blouse', 'Other'],
+                validate: v => v.length > 0
+            },
+            {
+                question: "What's the total amount?",
+                field: 'total',
+                type: 'number',
+                validate: v => !isNaN(v) && v > 0,
+                error: "Please enter a valid amount"
+            },
+            {
+                question: "How much advance did they pay?",
+                field: 'advance',
+                type: 'number',
+                validate: v => !isNaN(v) && v >= 0
+            },
+            {
+                question: "When is the delivery date?",
+                field: 'deliveryDate',
+                type: 'date',
+                validate: v => v.length > 0
+            }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            startChat();
+            
+            document.getElementById('chatInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendMessage();
+            });
+        });
+
+        function startChat() {
+            chatStep = 0;
+            customerData = {
+                id: Date.now().toString(),
+                createdAt: new Date().toISOString(),
+                orderStatus: 'pending',
+                category: 'new',
+                priority: 'normal'
+            };
+            document.getElementById('chatMessages').innerHTML = `
+                <div class="welcome-message">
+                    <h2>👋 Hi! I'm your assistant</h2>
+                    <p>I can help you add customers quickly. Just answer my questions!</p>
+                </div>
+            `;
+            askQuestion();
+        }
+
+        function askQuestion() {
+            if (chatStep >= steps.length) {
+                finishChat();
+                return;
+            }
+            
+            const step = steps[chatStep];
+            addBotMessage(step.question);
+            
+            // Show quick replies if choices available
+            const quickReplies = document.getElementById('quickReplies');
+            if (step.choices) {
+                quickReplies.innerHTML = step.choices.map(c => 
+                    `<button class="quick-reply-btn" onclick="selectChoice('${c}')">${c}</button>`
+                ).join('');
+            } else if (step.type === 'date') {
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                quickReplies.innerHTML = `
+                    <button class="quick-reply-btn" onclick="selectChoice('${tomorrow.toISOString().split('T')[0]}')">Tomorrow</button>
+                    <button class="quick-reply-btn" onclick="selectChoice('${new Date(Date.now() + 7*24*60*60*1000).toISOString().split('T')[0]}')">Next Week</button>
+                `;
+            } else {
+                quickReplies.innerHTML = '';
+            }
+        }
+
+        function addBotMessage(text) {
+            const div = document.createElement('div');
+            div.className = 'message bot';
+            div.innerHTML = `
+                <div class="message-content">${text}</div>
+                <div class="message-time">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+            `;
+            document.getElementById('chatMessages').appendChild(div);
+            scrollToBottom();
+        }
+
+        function addUserMessage(text) {
+            const div = document.createElement('div');
+            div.className = 'message user';
+            div.innerHTML = `
+                <div class="message-content">${text}</div>
+                <div class="message-time">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+            `;
+            document.getElementById('chatMessages').appendChild(div);
+            scrollToBottom();
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text) return;
+            
+            processUserInput(text);
+            input.value = '';
+        }
+
+        function selectChoice(choice) {
+            processUserInput(choice);
+        }
+
+        function processUserInput(text) {
+            addUserMessage(text);
+            
+            const step = steps[chatStep];
+            let value = text;
+            
+            if (step.type === 'number') {
+                value = parseFloat(text);
+            }
+            
+            if (!step.validate(value)) {
+                setTimeout(() => {
+                    addBotMessage(step.error || "That doesn't seem right. " + step.question);
+                }, 500);
+                return;
+            }
+            
+            customerData[step.field] = value;
+            chatStep++;
+            
+            setTimeout(askQuestion, 500);
+        }
+
+        function finishChat() {
+            // Calculate payment
+            const total = customerData.total || 0;
+            const advance = customerData.advance || 0;
+            customerData.payment = {
+                total: total,
+                advance: advance,
+                remaining: Math.max(0, total - advance),
+                status: advance >= total ? 'paid' : advance > 0 ? 'partial' : 'unpaid'
+            };
+            
+            addBotMessage(`✅ Great! I've saved ${customerData.name}'s order.`);
+            
+            setTimeout(() => {
+                addBotMessage(`📋 Order Summary:\n• ${customerData.dressType}\n• Total: ₹${total}\n• Due: ₹${customerData.payment.remaining}`);
+            }, 800);
+            
+            // Save customer
+            DataManager.addCustomer(customerData);
+            
+            setTimeout(() => {
+                addBotMessage('Redirecting to customers list...');
+                setTimeout(() => {
+                    window.location.href = 'customers.html';
+                }, 1500);
+            }, 2000);
+            
+            triggerConfetti();
+        }
+
+        function scrollToBottom() {
+            const container = document.getElementById('chatMessages');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function resetChat() {
+            if (confirm('Start over?')) {
+                startChat();
+            }
+        }
+    </script>
+</body>
+</html>

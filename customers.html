@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f0f0f">
+    <title>Customers - Seema Boutique</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app">
+        <div class="toast-container" id="toastContainer"></div>
+        
+        <!-- Header -->
+        <header class="page-header">
+            <div class="header-content">
+                <h1 class="page-title">👥 Customers</h1>
+                <div class="header-actions">
+                    <button class="icon-btn" onclick="exportCustomers()" title="Export">📥</button>
+                    <button class="icon-btn" onclick="toggleSort()" title="Sort">🔃</button>
+                </div>
+            </div>
+            
+            <!-- Search Bar -->
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="search" id="searchInput" placeholder="Search by name, phone, dress type..." oninput="searchCustomers()">
+                <button class="search-clear" id="searchClear" onclick="clearSearch()">✕</button>
+            </div>
+            
+            <!-- Filter Tabs -->
+            <div class="filter-tabs">
+                <button class="filter-tab active" onclick="filterCustomers('all')" data-filter="all">All</button>
+                <button class="filter-tab" onclick="filterCustomers('pending')" data-filter="pending">📋 Pending</button>
+                <button class="filter-tab" onclick="filterCustomers('ready')" data-filter="ready">✅ Ready</button>
+                <button class="filter-tab" onclick="filterCustomers('overdue')" data-filter="overdue">⚠️ Overdue</button>
+                <button class="filter-tab" onclick="filterCustomers('unpaid')" data-filter="unpaid">💰 Unpaid</button>
+                <button class="filter-tab" onclick="filterCustomers('vip')" data-filter="vip">👑 VIP</button>
+            </div>
+        </header>
+
+        <!-- Stats Summary -->
+        <div class="stats-bar">
+            <div class="stat-item" onclick="showStatDetail('total')">
+                <span class="stat-number" id="statTotal">0</span>
+                <span class="stat-label">Total</span>
+            </div>
+            <div class="stat-item" onclick="showStatDetail('pending')">
+                <span class="stat-number" id="statPending">0</span>
+                <span class="stat-label">Pending</span>
+            </div>
+            <div class="stat-item" onclick="showStatDetail('overdue')">
+                <span class="stat-number danger" id="statOverdue">0</span>
+                <span class="stat-label">Overdue</span>
+            </div>
+            <div class="stat-item" onclick="showStatDetail('revenue')">
+                <span class="stat-number success" id="statRevenue">₹0</span>
+                <span class="stat-label">Revenue</span>
+            </div>
+        </div>
+
+        <!-- Customer List -->
+        <div class="customer-list-container" id="customerList">
+            <!-- Populated by JS -->
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state hidden" id="emptyState">
+            <div class="empty-icon">📭</div>
+            <h2>No customers found</h2>
+            <p>Try adjusting your search or filters</p>
+            <a href="add-customer.html" class="btn btn-primary">Add First Customer</a>
+        </div>
+
+        <!-- Floating Action Button -->
+        <a href="add-customer.html" class="fab-btn" title="Add Customer">➕</a>
+
+        <!-- Bottom Nav -->
+        <nav class="bottom-nav">
+            <a href="index.html" class="nav-item" data-page="home">
+                <span class="nav-icon">🏠</span>
+                <span>Home</span>
+            </a>
+            <a href="customers.html" class="nav-item active" data-page="customers">
+                <span class="nav-icon">👥</span>
+                <span>Customers</span>
+                <span class="nav-badge" id="customerBadge">0</span>
+            </a>
+            <a href="add-customer.html" class="nav-item nav-item-main" data-page="add">
+                <span class="nav-icon-main">➕</span>
+            </a>
+            <a href="chat.html" class="nav-item" data-page="chat">
+                <span class="nav-icon">💬</span>
+                <span>Chat</span>
+            </a>
+            <a href="settings.html" class="nav-item" data-page="settings">
+                <span class="nav-icon">⚙️</span>
+                <span>More</span>
+            </a>
+        </nav>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+    <script>
+        let currentFilter = 'all';
+        let searchQuery = '';
+        let sortBy = 'date-desc';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCustomers();
+            updateStats();
+            updateBadge();
+        });
+
+        function loadCustomers() {
+            const customers = DataManager.getCustomers();
+            const filtered = filterAndSort(customers);
+            renderCustomerList(filtered);
+        }
+
+        function filterAndSort(customers) {
+            let filtered = customers.filter(c => {
+                // Search filter
+                const matchesSearch = !searchQuery || 
+                    c.name?.toLowerCase().includes(searchQuery) ||
+                    c.phone?.includes(searchQuery) ||
+                    c.dressType?.toLowerCase().includes(searchQuery);
+                
+                // Category filter
+                let matchesFilter = true;
+                if (currentFilter === 'pending') matchesFilter = c.orderStatus === 'pending';
+                else if (currentFilter === 'ready') matchesFilter = c.orderStatus === 'ready';
+                else if (currentFilter === 'overdue') {
+                    matchesFilter = c.deliveryDate && new Date(c.deliveryDate) < new Date() && c.orderStatus !== 'delivered';
+                }
+                else if (currentFilter === 'unpaid') matchesFilter = c.payment?.status !== 'paid';
+                else if (currentFilter === 'vip') matchesFilter = c.category === 'vip';
+                
+                return matchesSearch && matchesFilter;
+            });
+
+            // Sort
+            filtered.sort((a, b) => {
+                if (sortBy === 'date-desc') return new Date(b.createdAt) - new Date(a.createdAt);
+                if (sortBy === 'date-asc') return new Date(a.createdAt) - new Date(b.createdAt);
+                if (sortBy === 'name') return a.name.localeCompare(b.name);
+                if (sortBy === 'amount') return (b.payment?.total || 0) - (a.payment?.total || 0);
+                return 0;
+            });
+
+            return filtered;
+        }
+
+        function renderCustomerList(customers) {
+            const container = document.getElementById('customerList');
+            const emptyState = document.getElementById('emptyState');
+            
+            if (customers.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            
+            emptyState.classList.add('hidden');
+            
+            container.innerHTML = customers.map(c => createCustomerCard(c)).join('');
+        }
+
+        function createCustomerCard(c) {
+            const isOverdue = c.deliveryDate && new Date(c.deliveryDate) < new Date() && c.orderStatus !== 'delivered';
+            const initials = c.name ? c.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : '??';
+            const photoHtml = c.photo ? `<img src="${c.photo}" alt="">` : initials;
+            
+            const statusColors = {
+                pending: 'var(--warning)',
+                'in-progress': 'var(--info)',
+                ready: 'var(--success)',
+                delivered: 'var(--cyan)'
+            };
+            
+            const paymentColor = c.payment?.status === 'paid' ? 'var(--success)' : 
+                                c.payment?.status === 'partial' ? 'var(--warning)' : 'var(--danger)';
+            
+            return `
+                <div class="customer-card-enhanced" onclick="viewCustomer('${c.id}')">
+                    <div class="card-main">
+                        <div class="customer-avatar-large" style="border-color: ${statusColors[c.orderStatus] || 'var(--text-tertiary)'}">
+                            ${photoHtml}
+                        </div>
+                        <div class="customer-info-main">
+                            <div class="info-header">
+                                <h3 class="customer-name">${highlightSearch(c.name)}</h3>
+                                ${c.category === 'vip' ? '<span class="vip-badge">👑 VIP</span>' : ''}
+                                ${isOverdue ? '<span class="overdue-badge">⚠️ OVERDUE</span>' : ''}
+                            </div>
+                            <div class="info-meta">
+                                <span>📞 ${c.phone}</span>
+                                <span>•</span>
+                                <span>👔 ${c.dressType || 'N/A'}</span>
+                            </div>
+                            <div class="info-status">
+                                <span class="status-pill" style="background: ${statusColors[c.orderStatus]}20; color: ${statusColors[c.orderStatus]}">
+                                    ${c.orderStatus || 'pending'}
+                                </span>
+                                <span class="payment-pill" style="background: ${paymentColor}20; color: ${paymentColor}">
+                                    ${c.payment?.status || 'unpaid'}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="customer-amount">
+                            <div class="amount-total">₹${(c.payment?.total || 0).toLocaleString()}</div>
+                            <div class="amount-remaining" style="color: ${paymentColor}">
+                                ₹${(c.payment?.remaining || 0).toLocaleString()} due
+                            </div>
+                            ${c.deliveryDate ? `<div class="delivery-date">📅 ${formatDate(c.deliveryDate)}</div>` : ''}
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <button class="action-btn" onclick="event.stopPropagation(); quickCall('${c.phone}')">
+                            📞 Call
+                        </button>
+                        <button class="action-btn" onclick="event.stopPropagation(); quickWhatsApp('${c.phone}', '${c.id}')">
+                            💬 WhatsApp
+                        </button>
+                        <button class="action-btn" onclick="event.stopPropagation(); quickSMS('${c.phone}', '${c.id}')">
+                            ✉️ SMS
+                        </button>
+                        <button class="action-btn primary" onclick="event.stopPropagation(); editCustomer('${c.id}')">
+                            ✏️ Edit
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function highlightSearch(text) {
+            if (!searchQuery) return text;
+            const regex = new RegExp(`(${searchQuery})`, 'gi');
+            return text.replace(regex, '<mark>$1</mark>');
+        }
+
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            const today = new Date();
+            const diff = Math.ceil((date - today) / (1000 * 60 * 60 * 24));
+            
+            if (diff === 0) return 'Today';
+            if (diff === 1) return 'Tomorrow';
+            if (diff < 0) return `${Math.abs(diff)} days ago`;
+            return date.toLocaleDateString();
+        }
+
+        function searchCustomers() {
+            const input = document.getElementById('searchInput');
+            searchQuery = input.value.toLowerCase().trim();
+            document.getElementById('searchClear').style.display = searchQuery ? 'block' : 'none';
+            loadCustomers();
+        }
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            searchQuery = '';
+            document.getElementById('searchClear').style.display = 'none';
+            loadCustomers();
+        }
+
+        function filterCustomers(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.filter === filter);
+            });
+            loadCustomers();
+        }
+
+        function toggleSort() {
+            const options = ['date-desc', 'date-asc', 'name', 'amount'];
+            const currentIndex = options.indexOf(sortBy);
+            sortBy = options[(currentIndex + 1) % options.length];
+            
+            const labels = {
+                'date-desc': 'Newest First',
+                'date-asc': 'Oldest First',
+                'name': 'Name A-Z',
+                'amount': 'Highest Amount'
+            };
+            
+            showToast(`Sorted: ${labels[sortBy]}`, 'info');
+            loadCustomers();
+        }
+
+        function updateStats() {
+            const customers = DataManager.getCustomers();
+            const stats = {
+                total: customers.length,
+                pending: customers.filter(c => c.orderStatus === 'pending').length,
+                overdue: customers.filter(c => c.deliveryDate && new Date(c.deliveryDate) < new Date() && c.orderStatus !== 'delivered').length,
+                revenue: customers.reduce((sum, c) => sum + (c.payment?.total || 0), 0)
+            };
+            
+            document.getElementById('statTotal').textContent = stats.total;
+            document.getElementById('statPending').textContent = stats.pending;
+            document.getElementById('statOverdue').textContent = stats.overdue;
+            document.getElementById('statRevenue').textContent = '₹' + (stats.revenue / 1000).toFixed(1) + 'k';
+        }
+
+        function showStatDetail(type) {
+            if (type === 'total') filterCustomers('all');
+            else if (type === 'pending') filterCustomers('pending');
+            else if (type === 'overdue') filterCustomers('overdue');
+            else if (type === 'revenue') {
+                window.location.href = 'dashboard.html';
+            }
+        }
+
+        function viewCustomer(id) {
+            window.location.href = `customer-detail.html?id=${id}`;
+        }
+
+        function editCustomer(id) {
+            window.location.href = `customer-detail.html?id=${id}&edit=true`;
+        }
+
+        function exportCustomers() {
+            const customers = DataManager.getCustomers();
+            const csv = convertToCSV(customers);
+            downloadFile(csv, 'customers.csv', 'text/csv');
+            showToast('Customers exported to CSV', 'success');
+        }
+
+        function convertToCSV(customers) {
+            const headers = ['Name', 'Phone', 'Dress Type', 'Status', 'Total', 'Advance', 'Remaining', 'Delivery Date', 'Category'];
+            const rows = customers.map(c => [
+                c.name, c.phone, c.dressType, c.orderStatus,
+                c.payment?.total || 0, c.payment?.advance || 0, c.payment?.remaining || 0,
+                c.deliveryDate, c.category
+            ]);
+            return [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+        }
+
+        function downloadFile(content, filename, type) {
+            const blob = new Blob([content], { type });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>

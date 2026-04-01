@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f0f0f">
+    <title>Customer Details - Seema Boutique</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app">
+        <div class="toast-container" id="toastContainer"></div>
+        
+        <header class="page-header compact">
+            <a href="customers.html" class="back-btn">← Back</a>
+            <h1 class="page-title">Customer Details</h1>
+            <button class="icon-btn" onclick="toggleEdit()" id="editBtn">✏️</button>
+        </header>
+
+        <div id="viewMode">
+            <!-- Customer Header Card -->
+            <div class="detail-header">
+                <div class="detail-avatar" id="detailAvatar">
+                    <!-- Populated by JS -->
+                </div>
+                <div class="detail-title">
+                    <h2 id="detailName">Loading...</h2>
+                    <span class="detail-category" id="detailCategory">-</span>
+                </div>
+                <div class="detail-actions-top">
+                    <button class="action-circle" onclick="callCustomer()" title="Call">📞</button>
+                    <button class="action-circle" onclick="whatsappCustomer()" title="WhatsApp">💬</button>
+                    <button class="action-circle" onclick="shareCustomer()" title="Share">📤</button>
+                </div>
+            </div>
+
+            <!-- Status Cards -->
+            <div class="status-cards">
+                <div class="status-card" id="orderStatusCard">
+                    <span class="status-icon">📋</span>
+                    <span class="status-text" id="detailOrderStatus">-</span>
+                    <small>Order Status</small>
+                </div>
+                <div class="status-card" id="paymentStatusCard">
+                    <span class="status-icon">💰</span>
+                    <span class="status-text" id="detailPaymentStatus">-</span>
+                    <small>Payment</small>
+                </div>
+                <div class="status-card" id="deliveryCard">
+                    <span class="status-icon">📅</span>
+                    <span class="status-text" id="detailDelivery">-</span>
+                    <small>Delivery</small>
+                </div>
+            </div>
+
+            <!-- Payment Details -->
+            <div class="detail-section">
+                <h3>💰 Payment Details</h3>
+                <div class="payment-breakdown">
+                    <div class="payment-row">
+                        <span>Total Amount</span>
+                        <strong id="detailTotal">₹0</strong>
+                    </div>
+                    <div class="payment-row">
+                        <span>Advance Paid</span>
+                        <strong class="success" id="detailAdvance">₹0</strong>
+                    </div>
+                    <div class="payment-row highlight">
+                        <span>Amount Due</span>
+                        <strong class="danger" id="detailRemaining">₹0</strong>
+                    </div>
+                </div>
+                <button class="btn btn-secondary btn-full" onclick="recordPayment()" id="recordPaymentBtn">
+                    💳 Record Payment
+                </button>
+            </div>
+
+            <!-- Order Details -->
+            <div class="detail-section">
+                <h3>👔 Order Information</h3>
+                <div class="info-list">
+                    <div class="info-item">
+                        <span>Dress Type</span>
+                        <strong id="detailDress">-</strong>
+                    </div>
+                    <div class="info-item">
+                        <span>Priority</span>
+                        <strong id="detailPriority">-</strong>
+                    </div>
+                    <div class="info-item">
+                        <span>Order Date</span>
+                        <strong id="detailOrderDate">-</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Measurements -->
+            <div class="detail-section" id="measurementsSection">
+                <h3>📏 Measurements</h3>
+                <div class="measurements-display" id="measurementsDisplay">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Notes -->
+            <div class="detail-section" id="notesSection">
+                <h3>📝 Notes</h3>
+                <p class="notes-text" id="detailNotes">-</p>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="detail-actions">
+                <button class="btn btn-primary btn-full" onclick="markAsReady()" id="readyBtn">
+                    ✅ Mark as Ready
+                </button>
+                <button class="btn btn-success btn-full" onclick="markAsDelivered()" id="deliveredBtn">
+                    🚚 Mark as Delivered
+                </button>
+                <button class="btn btn-secondary" onclick="printReceipt()">
+                    🖨️ Print Receipt
+                </button>
+                <button class="btn btn-danger" onclick="deleteCustomer()">
+                    🗑️ Delete Customer
+                </button>
+            </div>
+        </div>
+
+        <!-- Edit Mode -->
+        <div id="editMode" class="hidden">
+            <form id="editForm" onsubmit="event.preventDefault(); saveEdit();">
+                <!-- Same fields as add-customer but pre-filled -->
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" id="editName" required>
+                </div>
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input type="tel" id="editPhone" required>
+                </div>
+                <div class="form-group">
+                    <label>Dress Type</label>
+                    <input type="text" id="editDress" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="editStatus">
+                            <option value="pending">Pending</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="ready">Ready</option>
+                            <option value="delivered">Delivered</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select id="editCategory">
+                            <option value="new">New</option>
+                            <option value="regular">Regular</option>
+                            <option value="vip">VIP</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Total Amount</label>
+                    <input type="number" id="editTotal" required>
+                </div>
+                <div class="form-group">
+                    <label>Advance</label>
+                    <input type="number" id="editAdvance">
+                </div>
+                <div class="form-group">
+                    <label>Delivery Date</label>
+                    <input type="date" id="editDelivery">
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="editNotes" rows="3"></textarea>
+                </div>
+                
+                <div class="form-row">
+                    <button type="button" class="btn btn-secondary" onclick="toggleEdit()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Bottom Nav -->
+        <nav class="bottom-nav">
+            <a href="index.html" class="nav-item" data-page="home">
+                <span class="nav-icon">🏠</span>
+                <span>Home</span>
+            </a>
+            <a href="customers.html" class="nav-item active" data-page="customers">
+                <span class="nav-icon">👥</span>
+                <span>Customers</span>
+            </a>
+            <a href="add-customer.html" class="nav-item nav-item-main" data-page="add">
+                <span class="nav-icon-main">➕</span>
+            </a>
+            <a href="chat.html" class="nav-item" data-page="chat">
+                <span class="nav-icon">💬</span>
+                <span>Chat</span>
+            </a>
+            <a href="settings.html" class="nav-item" data-page="settings">
+                <span class="nav-icon">⚙️</span>
+                <span>More</span>
+            </a>
+        </nav>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+    <script>
+        let customerId = null;
+        let customer = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            customerId = params.get('id');
+            const edit = params.get('edit');
+            
+            if (!customerId) {
+                window.location.href = 'customers.html';
+                return;
+            }
+            
+            loadCustomer();
+            
+            if (edit === 'true') {
+                toggleEdit();
+            }
+        });
+
+        function loadCustomer() {
+            customer = DataManager.getCustomer(customerId);
+            if (!customer) {
+                showToast('Customer not found', 'error');
+                window.location.href = 'customers.html';
+                return;
+            }
+            
+            renderCustomer();
+        }
+
+        function renderCustomer() {
+            // Header
+            document.getElementById('detailName').textContent = customer.name;
+            document.getElementById('detailCategory').textContent = customer.category || 'regular';
+            document.getElementById('detailCategory').className = `detail-category ${customer.category}`;
+            
+            const avatar = document.getElementById('detailAvatar');
+            if (customer.photo) {
+                avatar.innerHTML = `<img src="${customer.photo}" alt="">`;
+            } else {
+                const initials = customer.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+                avatar.innerHTML = initials;
+                avatar.style.background = 'var(--gradient-1)';
+            }
+            
+            // Status cards
+            document.getElementById('detailOrderStatus').textContent = customer.orderStatus || 'pending';
+            document.getElementById('detailPaymentStatus').textContent = customer.payment?.status || 'unpaid';
+            
+            const isOverdue = customer.deliveryDate && new Date(customer.deliveryDate) < new Date() && customer.orderStatus !== 'delivered';
+            document.getElementById('detailDelivery').textContent = isOverdue ? 'OVERDUE' : (customer.deliveryDate ? formatDate(customer.deliveryDate) : 'Not set');
+            document.getElementById('deliveryCard').classList.toggle('danger', isOverdue);
+            
+            // Payment
+            document.getElementById('detailTotal').textContent = '₹' + (customer.payment?.total || 0).toLocaleString();
+            document.getElementById('detailAdvance').textContent = '₹' + (customer.payment?.advance || 0).toLocaleString();
+            document.getElementById('detailRemaining').textContent = '₹' + (customer.payment?.remaining || 0).toLocaleString();
+            
+            // Order info
+            document.getElementById('detailDress').textContent = customer.dressType || '-';
+            document.getElementById('detailPriority').textContent = customer.priority || 'normal';
+            document.getElementById('detailOrderDate').textContent = formatDate(customer.createdAt);
+            
+            // Measurements
+            const hasMeasurements = customer.measurements && Object.values(customer.measurements).some(v => v);
+            document.getElementById('measurementsSection').style.display = hasMeasurements ? 'block' : 'none';
+            if (hasMeasurements) {
+                const m = customer.measurements;
+                document.getElementById('measurementsDisplay').innerHTML = `
+                    ${m.chest ? `<div class="measure-box"><span>Chest</span><strong>${m.chest}"</strong></div>` : ''}
+                    ${m.waist ? `<div class="measure-box"><span>Waist</span><strong>${m.waist}"</strong></div>` : ''}
+                    ${m.hip ? `<div class="measure-box"><span>Hip</span><strong>${m.hip}"</strong></div>` : ''}
+                    ${m.length ? `<div class="measure-box"><span>Length</span><strong>${m.length}"</strong></div>` : ''}
+                    ${m.sleeve ? `<div class="measure-box"><span>Sleeve</span><strong>${m.sleeve}"</strong></div>` : ''}
+                    ${m.shoulder ? `<div class="measure-box"><span>Shoulder</span><strong>${m.shoulder}"</strong></div>` : ''}
+                `;
+            }
+            
+            // Notes
+            if (customer.notes) {
+                document.getElementById('notesSection').style.display = 'block';
+                document.getElementById('detailNotes').textContent = customer.notes;
+            } else {
+                document.getElementById('notesSection').style.display = 'none';
+            }
+            
+            // Button states
+            document.getElementById('readyBtn').style.display = customer.orderStatus !== 'ready' && customer.orderStatus !== 'delivered' ? 'block' : 'none';
+            document.getElementById('deliveredBtn').style.display = customer.orderStatus !== 'delivered' ? 'block' : 'none';
+            document.getElementById('recordPaymentBtn').style.display = customer.payment?.status !== 'paid' ? 'block' : 'none';
+            
+            // Fill edit form
+            document.getElementById('editName').value = customer.name;
+            document.getElementById('editPhone').value = customer.phone;
+            document.getElementById('editDress').value = customer.dressType || '';
+            document.getElementById('editStatus').value = customer.orderStatus || 'pending';
+            document.getElementById('editCategory').value = customer.category || 'regular';
+            document.getElementById('editTotal').value = customer.payment?.total || '';
+            document.getElementById('editAdvance').value = customer.payment?.advance || '';
+            document.getElementById('editDelivery').value = customer.deliveryDate || '';
+            document.getElementById('editNotes').value = customer.notes || '';
+        }
+
+        function toggleEdit() {
+            document.getElementById('viewMode').classList.toggle('hidden');
+            document.getElementById('editMode').classList.toggle('hidden');
+            document.getElementById('editBtn').textContent = document.getElementById('editMode').classList.contains('hidden') ? '✏️' : '✕';
+        }
+
+        function saveEdit() {
+            customer.name = document.getElementById('editName').value;
+            customer.phone = document.getElementById('editPhone').value;
+            customer.dressType = document.getElementById('editDress').value;
+            customer.orderStatus = document.getElementById('editStatus').value;
+            customer.category = document.getElementById('editCategory').value;
+            customer.deliveryDate = document.getElementById('editDelivery').value;
+            customer.notes = document.getElementById('editNotes').value;
+            
+            const total = parseFloat(document.getElementById('editTotal').value) || 0;
+            const advance = parseFloat(document.getElementById('editAdvance').value) || 0;
+            
+            customer.payment = {
+                total: total,
+                advance: advance,
+                remaining: Math.max(0, total - advance),
+                status: advance >= total ? 'paid' : advance > 0 ? 'partial' : 'unpaid'
+            };
+            
+            DataManager.updateCustomer(customer);
+            showToast('Customer updated', 'success');
+            toggleEdit();
+            renderCustomer();
+        }
+
+        function callCustomer() {
+            if (customer.phone) window.location.href = `tel:${customer.phone}`;
+        }
+
+        function whatsappCustomer() {
+            if (!customer.phone) return;
+            const msg = `Hi ${customer.name}, regarding your ${customer.dressType} order. Status: ${customer.orderStatus}. Due: ₹${customer.payment?.remaining || 0}`;
+            window.open(`https://wa.me/${customer.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+
+        function shareCustomer() {
+            const text = `Customer: ${customer.name}\nOrder: ${customer.dressType}\nStatus: ${customer.orderStatus}\nDue: ₹${customer.payment?.remaining || 0}`;
+            if (navigator.share) {
+                navigator.share({ title: 'Customer Details', text });
+            } else {
+                navigator.clipboard.writeText(text);
+                showToast('Copied to clipboard', 'success');
+            }
+        }
+
+        function recordPayment() {
+            const amount = prompt('Enter payment amount:', customer.payment?.remaining || 0);
+            if (!amount || isNaN(amount)) return;
+            
+            const newAdvance = (customer.payment?.advance || 0) + parseFloat(amount);
+            customer.payment.advance = newAdvance;
+            customer.payment.remaining = Math.max(0, customer.payment.total - newAdvance);
+            customer.payment.status = customer.payment.remaining === 0 ? 'paid' : 'partial';
+            
+            DataManager.updateCustomer(customer);
+            showToast('Payment recorded', 'success');
+            renderCustomer();
+        }
+
+        function markAsReady() {
+            customer.orderStatus = 'ready';
+            DataManager.updateCustomer(customer);
+            showToast('Marked as ready', 'success');
+            renderCustomer();
+            triggerConfetti();
+        }
+
+        function markAsDelivered() {
+            customer.orderStatus = 'delivered';
+            if (customer.payment?.status !== 'paid') {
+                if (confirm('Payment not complete. Mark as delivered anyway?')) {
+                    DataManager.updateCustomer(customer);
+                    showToast('Marked as delivered', 'success');
+                    renderCustomer();
+                    triggerConfetti();
+                }
+            } else {
+                DataManager.updateCustomer(customer);
+                showToast('Marked as delivered', 'success');
+                renderCustomer();
+                triggerConfetti();
+            }
+        }
+
+        function printReceipt() {
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                <head><title>Receipt - ${customer.name}</title></head>
+                <body style="font-family: Arial; padding: 40px;">
+                    <h1 style="text-align: center;">Seema Boutique</h1>
+                    <hr>
+                    <h2>Order Receipt</h2>
+                    <p><strong>Customer:</strong> ${customer.name}</p>
+                    <p><strong>Phone:</strong> ${customer.phone}</p>
+                    <p><strong>Order:</strong> ${customer.dressType}</p>
+                    <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
+                    <hr>
+                    <p><strong>Total:</strong> ₹${customer.payment?.total || 0}</p>
+                    <p><strong>Paid:</strong> ₹${customer.payment?.advance || 0}</p>
+                    <p><strong>Due:</strong> ₹${customer.payment?.remaining || 0}</p>
+                    <hr>
+                    <p style="text-align: center;">Thank you for your business!</p>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        function deleteCustomer() {
+            if (!confirm('Are you sure you want to delete this customer?')) return;
+            DataManager.deleteCustomer(customerId);
+            showToast('Customer deleted', 'warning');
+            setTimeout(() => window.location.href = 'customers.html', 1000);
+        }
+
+        function formatDate(dateStr) {
+            return new Date(dateStr).toLocaleDateString();
+        }
+    </script>
+</body>
+</html>

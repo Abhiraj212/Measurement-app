@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Settings - Seema Boutique</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app">
+        <header class="page-header">
+            <h1 class="page-title">⚙️ Settings</h1>
+        </header>
+
+        <div class="settings-container">
+            <!-- Business Info -->
+            <div class="settings-section">
+                <h3>🏪 Business Info</h3>
+                <div class="form-group">
+                    <label>Shop Name</label>
+                    <input type="text" id="shopName" value="Seema Boutique" onchange="saveSetting('shopName', this.value)">
+                </div>
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input type="tel" id="shopPhone" placeholder="Your business phone" onchange="saveSetting('shopPhone', this.value)">
+                </div>
+                <div class="form-group">
+                    <label>Address</label>
+                    <textarea id="shopAddress" rows="2" placeholder="Your shop address" onchange="saveSetting('shopAddress', this.value)"></textarea>
+                </div>
+            </div>
+
+            <!-- Appearance -->
+            <div class="settings-section">
+                <h3>🎨 Appearance</h3>
+                <div class="theme-options">
+                    <button class="theme-btn active" onclick="setTheme('dark')">
+                        <span class="theme-preview dark"></span>
+                        <span>Dark</span>
+                    </button>
+                    <button class="theme-btn" onclick="setTheme('light')">
+                        <span class="theme-preview light"></span>
+                        <span>Light</span>
+                    </button>
+                    <button class="theme-btn" onclick="setTheme('auto')">
+                        <span class="theme-preview auto"></span>
+                        <span>Auto</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Statistics -->
+            <div class="settings-section">
+                <h3>📊 Statistics</h3>
+                <div class="stats-grid-compact">
+                    <div class="stat-box">
+                        <span class="stat-number" id="statTotalCustomers">0</span>
+                        <span class="stat-label">Customers</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-number" id="statTotalOrders">0</span>
+                        <span class="stat-label">Orders</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-number" id="statTotalRevenue">₹0</span>
+                        <span class="stat-label">Revenue</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-number" id="statPendingAmount">₹0</span>
+                        <span class="stat-label">Pending</span>
+                    </div>
+                </div>
+                <a href="dashboard.html" class="btn btn-secondary btn-full" style="margin-top: 12px;">
+                    📈 View Detailed Reports
+                </a>
+            </div>
+
+            <!-- Data Management -->
+            <div class="settings-section">
+                <h3>💾 Data Management</h3>
+                
+                <button class="settings-btn" onclick="exportData()">
+                    <span class="btn-icon">📥</span>
+                    <div class="btn-content">
+                        <strong>Export Backup</strong>
+                        <small>Save all data as JSON file</small>
+                    </div>
+                </button>
+                
+                <button class="settings-btn" onclick="document.getElementById('importFile').click()">
+                    <span class="btn-icon">📤</span>
+                    <div class="btn-content">
+                        <strong>Import Data</strong>
+                        <small>Restore from backup file</small>
+                    </div>
+                </button>
+                <input type="file" id="importFile" accept=".json" hidden onchange="importData(event)">
+                
+                <button class="settings-btn" onclick="exportCSV()">
+                    <span class="btn-icon">📊</span>
+                    <div class="btn-content">
+                        <strong>Export to Excel</strong>
+                        <small>Download as CSV file</small>
+                    </div>
+                </button>
+                
+                <button class="settings-btn danger" onclick="clearAllData()">
+                    <span class="btn-icon">🗑️</span>
+                    <div class="btn-content">
+                        <strong>Clear All Data</strong>
+                        <small>Delete everything permanently</small>
+                    </div>
+                </button>
+            </div>
+
+            <!-- Tools -->
+            <div class="settings-section">
+                <h3>🛠️ Tools</h3>
+                <a href="calculator.html" class="settings-btn">
+                    <span class="btn-icon">🧮</span>
+                    <div class="btn-content">
+                        <strong>Price Calculator</strong>
+                        <small>Calculate pricing with margins</small>
+                    </div>
+                </a>
+                <a href="scan.html" class="settings-btn">
+                    <span class="btn-icon">📷</span>
+                    <div class="btn-content">
+                        <strong>Scan Documents</strong>
+                        <small>OCR for measurements</small>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Notifications -->
+            <div class="settings-section">
+                <h3>🔔 Notifications</h3>
+                <label class="toggle-item">
+                    <span>Daily Reminders</span>
+                    <input type="checkbox" id="dailyReminders" onchange="toggleNotification('daily', this.checked)">
+                    <span class="toggle"></span>
+                </label>
+                <label class="toggle-item">
+                    <span>Overdue Alerts</span>
+                    <input type="checkbox" id="overdueAlerts" checked onchange="toggleNotification('overdue', this.checked)">
+                    <span class="toggle"></span>
+                </label>
+                <label class="toggle-item">
+                    <span>Payment Reminders</span>
+                    <input type="checkbox" id="paymentReminders" onchange="toggleNotification('payment', this.checked)">
+                    <span class="toggle"></span>
+                </label>
+            </div>
+
+            <!-- About -->
+            <div class="settings-section about">
+                <div class="app-logo">👗</div>
+                <h2>Seema Boutique Pro</h2>
+                <p>Version 2.0</p>
+                <p>Made with ❤️ for tailors</p>
+                <div class="links">
+                    <a href="#" onclick="showHelp()">Help</a>
+                    <a href="#" onclick="showPrivacy()">Privacy</a>
+                    <a href="#" onclick="contactSupport()">Support</a>
+                </div>
+            </div>
+        </div>
+
+        <nav class="bottom-nav">
+            <a href="index.html" class="nav-item" data-page="home">
+                <span class="nav-icon">🏠</span>
+                <span>Home</span>
+            </a>
+            <a href="customers.html" class="nav-item" data-page="customers">
+                <span class="nav-icon">👥</span>
+                <span>Customers</span>
+            </a>
+            <a href="add-customer.html" class="nav-item nav-item-main" data-page="add">
+                <span class="nav-icon-main">➕</span>
+            </a>
+            <a href="chat.html" class="nav-item" data-page="chat">
+                <span class="nav-icon">💬</span>
+                <span>Chat</span>
+            </a>
+            <a href="settings.html" class="nav-item active" data-page="settings">
+                <span class="nav-icon">⚙️</span>
+                <span>More</span>
+            </a>
+        </nav>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSettings();
+            updateStats();
+        });
+
+        function loadSettings() {
+            const settings = JSON.parse(localStorage.getItem('seema_settings') || '{}');
+            
+            document.getElementById('shopName').value = settings.shopName || 'Seema Boutique';
+            document.getElementById('shopPhone').value = settings.shopPhone || '';
+            document.getElementById('shopAddress').value = settings.shopAddress || '';
+            
+            if (settings.theme) setTheme(settings.theme);
+        }
+
+        function saveSetting(key, value) {
+            const settings = JSON.parse(localStorage.getItem('seema_settings') || '{}');
+            settings[key] = value;
+            localStorage.setItem('seema_settings', JSON.stringify(settings));
+            showToast('Setting saved', 'success');
+        }
+
+        function setTheme(theme) {
+            document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.closest('.theme-btn').classList.add('active');
+            
+            if (theme === 'light') {
+                document.documentElement.style.setProperty('--bg', '#f5f5f5');
+                document.documentElement.style.setProperty('--surface', '#ffffff');
+                document.documentElement.style.setProperty('--text', '#1a1a1a');
+            } else {
+                document.documentElement.style.setProperty('--bg', '#0a0a0a');
+                document.documentElement.style.setProperty('--surface', '#141414');
+                document.documentElement.style.setProperty('--text', '#ffffff');
+            }
+            
+            saveSetting('theme', theme);
+        }
+
+        function updateStats() {
+            const customers = DataManager.getCustomers();
+            const stats = {
+                total: customers.length,
+                revenue: customers.reduce((sum, c) => sum + (c.payment?.total || 0), 0),
+                pending: customers.reduce((sum, c) => sum + (c.payment?.remaining || 0), 0)
+            };
+            
+            document.getElementById('statTotalCustomers').textContent = stats.total;
+            document.getElementById('statTotalOrders').textContent = stats.total;
+            document.getElementById('statTotalRevenue').textContent = '₹' + (stats.revenue / 1000).toFixed(1) + 'k';
+            document.getElementById('statPendingAmount').textContent = '₹' + (stats.pending / 1000).toFixed(1) + 'k';
+        }
+
+        function exportData() {
+            const data = {
+                version: '2.0',
+                exportedAt: new Date().toISOString(),
+                customers: DataManager.getCustomers(),
+                settings: JSON.parse(localStorage.getItem('seema_settings') || '{}')
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `seema-boutique-backup-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showToast('Backup exported', 'success');
+            triggerConfetti();
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (!data.customers || !Array.isArray(data.customers)) {
+                        throw new Error('Invalid backup file');
+                    }
+                    
+                    if (confirm(`Import ${data.customers.length} customers? This will REPLACE all current data.`)) {
+                        DataManager.saveCustomers(data.customers);
+                        if (data.settings) {
+                            localStorage.setItem('seema_settings', JSON.stringify(data.settings));
+                        }
+                        showToast('Data imported successfully', 'success');
+                        updateStats();
+                    }
+                } catch (err) {
+                    showToast('Import failed: ' + err.message, 'error');
+                }
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        function exportCSV() {
+            const customers = DataManager.getCustomers();
+            const headers = ['ID', 'Name', 'Phone', 'Category', 'Dress Type', 'Order Status', 'Priority', 'Total', 'Advance', 'Remaining', 'Payment Status', 'Delivery Date', 'Created At', 'Notes'];
+            
+            const rows = customers.map(c => [
+                c.id, c.name, c.phone, c.category, c.dressType, c.orderStatus, c.priority,
+                c.payment?.total || 0, c.payment?.advance || 0, c.payment?.remaining || 0,
+                c.payment?.status || 'unpaid', c.deliveryDate || '', c.createdAt, c.notes || ''
+            ]);
+            
+            const csv = [headers.join(','), ...rows.map(r => r.map(v => `"${v}"`).join(','))].join('\n');
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `customers-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showToast('CSV exported', 'success');
+        }
+
+        function clearAllData() {
+            if (!confirm('⚠️ WARNING: This will delete ALL customers and settings. This cannot be undone. Continue?')) return;
+            if (!confirm('Are you absolutely sure? Type "DELETE" to confirm.')) return;
+            
+            localStorage.removeItem('seema_customers_v2');
+            localStorage.removeItem('seema_backup');
+            localStorage.removeItem('seema_settings');
+            
+            showToast('All data cleared', 'warning');
+            setTimeout(() => location.reload(), 1000);
+        }
+
+        function toggleNotification(type, enabled) {
+            const settings = JSON.parse(localStorage.getItem('seema_settings') || '{}');
+            settings.notifications = settings.notifications || {};
+            settings.notifications[type] = enabled;
+            saveSetting('notifications', settings.notifications);
+        }
+
+        function showHelp() {
+            alert('📖 Help:\n\n1. Add customers from Customers page\n2. Use Chat mode for quick entry\n3. Scan documents to auto-fill measurements\n4. Use Calculator to determine pricing\n5. Export backup regularly to keep data safe');
+        }
+
+        function showPrivacy() {
+            alert('🔒 Privacy:\n\nAll data is stored locally on your device. No data is sent to any server. You have full control over your information.');
+        }
+
+        function contactSupport() {
+            window.open('mailto:support@seemaboutique.com', '_blank');
+        }
+    </script>
+</body>
+</html>

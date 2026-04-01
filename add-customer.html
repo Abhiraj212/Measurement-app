@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f0f0f">
+    <title>Add Customer - Seema Boutique</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app">
+        <div class="toast-container" id="toastContainer"></div>
+        
+        <header class="page-header compact">
+            <a href="customers.html" class="back-btn">← Back</a>
+            <h1 class="page-title">New Customer</h1>
+            <div style="width: 60px;"></div>
+        </header>
+
+        <!-- Progress Steps -->
+        <div class="progress-steps">
+            <div class="step active" data-step="1">
+                <div class="step-number">1</div>
+                <span>Basic</span>
+            </div>
+            <div class="step-line"></div>
+            <div class="step" data-step="2">
+                <div class="step-number">2</div>
+                <span>Order</span>
+            </div>
+            <div class="step-line"></div>
+            <div class="step" data-step="3">
+                <div class="step-number">3</div>
+                <span>Payment</span>
+            </div>
+        </div>
+
+        <form id="customerForm" class="customer-form" onsubmit="event.preventDefault(); saveCustomer();">
+            
+            <!-- Step 1: Basic Info -->
+            <div class="form-section active" id="step1">
+                <div class="photo-upload" onclick="document.getElementById('photoInput').click()">
+                    <input type="file" id="photoInput" accept="image/*" onchange="handlePhoto(event)" hidden>
+                    <div class="photo-preview" id="photoPreview">
+                        <span>📷</span>
+                        <p>Add Photo</p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Customer Name *</label>
+                    <input type="text" id="name" required placeholder="Enter full name" oninput="validateStep1()">
+                </div>
+
+                <div class="form-group">
+                    <label>Phone Number *</label>
+                    <input type="tel" id="phone" required placeholder="+91 98765 43210" oninput="validateStep1()">
+                </div>
+
+                <div class="form-group">
+                    <label>Category</label>
+                    <div class="radio-group">
+                        <label class="radio-card">
+                            <input type="radio" name="category" value="new" checked>
+                            <span>🆕 New</span>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="category" value="regular">
+                            <span>👤 Regular</span>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="category" value="vip">
+                            <span>👑 VIP</span>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="button" class="btn btn-primary btn-full" id="btnStep1" onclick="goToStep(2)" disabled>
+                    Continue →
+                </button>
+            </div>
+
+            <!-- Step 2: Order Details -->
+            <div class="form-section" id="step2">
+                <div class="form-group">
+                    <label>Dress Type *</label>
+                    <select id="dressType" required onchange="validateStep2()">
+                        <option value="">Select type...</option>
+                        <option value="Shirt">👔 Shirt</option>
+                        <option value="Pant">👖 Pant</option>
+                        <option value="Suit">🤵 Suit</option>
+                        <option value="Blazer">🧥 Blazer</option>
+                        <option value="Lehenga">👗 Lehenga</option>
+                        <option value="Saree Blouse">🥻 Saree Blouse</option>
+                        <option value="Kurti">👘 Kurti</option>
+                        <option value="Sherwani">🥻 Sherwani</option>
+                        <option value="Gown">👗 Gown</option>
+                        <option value="Kurta">👕 Kurta</option>
+                        <option value="Waistcoat">🦺 Waistcoat</option>
+                        <option value="Other">✨ Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Order Status</label>
+                    <div class="status-options">
+                        <button type="button" class="status-btn active" onclick="setStatus('pending')">
+                            📋 Pending
+                        </button>
+                        <button type="button" class="status-btn" onclick="setStatus('in-progress')">
+                            🔄 In Progress
+                        </button>
+                        <button type="button" class="status-btn" onclick="setStatus('ready')">
+                            ✅ Ready
+                        </button>
+                    </div>
+                    <input type="hidden" id="orderStatus" value="pending">
+                </div>
+
+                <div class="form-group">
+                    <label>Priority</label>
+                    <div class="priority-slider">
+                        <button type="button" class="priority-btn" onclick="setPriority('normal')">
+                            🟢 Normal
+                        </button>
+                        <button type="button" class="priority-btn active" onclick="setPriority('urgent')">
+                            🟡 Urgent
+                        </button>
+                        <button type="button" class="priority-btn" onclick="setPriority('express')">
+                            🔴 Express
+                        </button>
+                    </div>
+                    <input type="hidden" id="priority" value="urgent">
+                </div>
+
+                <div class="form-group">
+                    <label>Delivery Date</label>
+                    <input type="date" id="deliveryDate" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="notes" rows="3" placeholder="Special instructions, fabric details, colors..."></textarea>
+                </div>
+
+                <div class="form-row">
+                    <button type="button" class="btn btn-secondary" onclick="goToStep(1)">← Back</button>
+                    <button type="button" class="btn btn-primary" id="btnStep2" onclick="goToStep(3)" disabled>
+                        Continue →
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 3: Measurements & Payment -->
+            <div class="form-section" id="step3">
+                
+                <!-- Quick Measurements -->
+                <div class="measurements-section">
+                    <div class="section-header-compact">
+                        <h3>📏 Measurements (inches)</h3>
+                        <button type="button" class="text-btn" onclick="toggleMeasurements()">
+                            <span id="measureToggle">Show</span>
+                        </button>
+                    </div>
+                    
+                    <div class="measurements-grid hidden" id="measurementsGrid">
+                        <div class="measure-input">
+                            <label>Chest</label>
+                            <input type="number" id="chest" step="0.1" placeholder="0.0">
+                        </div>
+                        <div class="measure-input">
+                            <label>Waist</label>
+                            <input type="number" id="waist" step="0.1" placeholder="0.0">
+                        </div>
+                        <div class="measure-input">
+                            <label>Hip</label>
+                            <input type="number" id="hip" step="0.1" placeholder="0.0">
+                        </div>
+                        <div class="measure-input">
+                            <label>Length</label>
+                            <input type="number" id="length" step="0.1" placeholder="0.0">
+                        </div>
+                        <div class="measure-input">
+                            <label>Sleeve</label>
+                            <input type="number" id="sleeve" step="0.1" placeholder="0.0">
+                        </div>
+                        <div class="measure-input">
+                            <label>Shoulder</label>
+                            <input type="number" id="shoulder" step="0.1" placeholder="0.0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment -->
+                <div class="payment-section">
+                    <h3>💰 Payment Details</h3>
+                    
+                    <div class="form-group">
+                        <label>Total Amount (₹)</label>
+                        <input type="number" id="totalAmount" required placeholder="0.00" oninput="calculateRemaining()">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Advance (₹)</label>
+                            <input type="number" id="advanceAmount" placeholder="0.00" oninput="calculateRemaining()">
+                        </div>
+                        <div class="form-group">
+                            <label>Remaining</label>
+                            <input type="number" id="remainingAmount" readonly placeholder="0.00">
+                        </div>
+                    </div>
+
+                    <div class="payment-status-display" id="paymentStatusDisplay">
+                        <span class="status-indicator unpaid">●</span>
+                        <span id="paymentStatusText">Unpaid</span>
+                    </div>
+                    <input type="hidden" id="paymentStatus" value="unpaid">
+                </div>
+
+                <!-- Summary -->
+                <div class="summary-box" id="summaryBox">
+                    <h4>Order Summary</h4>
+                    <div class="summary-row">
+                        <span>Customer:</span>
+                        <strong id="summaryName">-</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>Order:</span>
+                        <strong id="summaryOrder">-</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>Total:</span>
+                        <strong id="summaryTotal">₹0</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>Delivery:</span>
+                        <strong id="summaryDelivery">-</strong>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <button type="button" class="btn btn-secondary" onclick="goToStep(2)">← Back</button>
+                    <button type="submit" class="btn btn-primary btn-large">
+                        💾 Save Customer
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions-bar">
+            <a href="scan.html" class="quick-action-item">
+                <span>📷</span>
+                <small>Scan</small>
+            </a>
+            <a href="calculator.html" class="quick-action-item">
+                <span>🧮</span>
+                <small>Calculate</small>
+            </a>
+            <a href="chat.html" class="quick-action-item">
+                <span>💬</span>
+                <small>Chat Mode</small>
+            </a>
+        </div>
+
+        <!-- Bottom Nav -->
+        <nav class="bottom-nav">
+            <a href="index.html" class="nav-item" data-page="home">
+                <span class="nav-icon">🏠</span>
+                <span>Home</span>
+            </a>
+            <a href="customers.html" class="nav-item" data-page="customers">
+                <span class="nav-icon">👥</span>
+                <span>Customers</span>
+            </a>
+            <a href="add-customer.html" class="nav-item nav-item-main active" data-page="add">
+                <span class="nav-icon-main">➕</span>
+            </a>
+            <a href="chat.html" class="nav-item" data-page="chat">
+                <span class="nav-icon">💬</span>
+                <span>Chat</span>
+            </a>
+            <a href="settings.html" class="nav-item" data-page="settings">
+                <span class="nav-icon">⚙️</span>
+                <span>More</span>
+            </a>
+        </nav>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+    <script>
+        let currentStep = 1;
+        let photoData = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set default delivery date to tomorrow
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            document.getElementById('deliveryDate').value = tomorrow.toISOString().split('T')[0];
+            
+            validateStep1();
+        });
+
+        function goToStep(step) {
+            document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+            document.getElementById(`step${step}`).classList.add('active');
+            
+            document.querySelectorAll('.step').forEach(s => {
+                const stepNum = parseInt(s.dataset.step);
+                s.classList.remove('active', 'completed');
+                if (stepNum === step) s.classList.add('active');
+                else if (stepNum < step) s.classList.add('completed');
+            });
+            
+            currentStep = step;
+            
+            if (step === 3) updateSummary();
+        }
+
+        function validateStep1() {
+            const name = document.getElementById('name').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            document.getElementById('btnStep1').disabled = !(name.length >= 2 && phone.length >= 10);
+        }
+
+        function validateStep2() {
+            const dressType = document.getElementById('dressType').value;
+            document.getElementById('btnStep2').disabled = !dressType;
+        }
+
+        function handlePhoto(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                photoData = e.target.result;
+                document.getElementById('photoPreview').innerHTML = `<img src="${e.target.result}">`;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function setStatus(status) {
+            document.getElementById('orderStatus').value = status;
+            document.querySelectorAll('.status-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent.toLowerCase().includes(status));
+            });
+        }
+
+        function setPriority(priority) {
+            document.getElementById('priority').value = priority;
+            document.querySelectorAll('.priority-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent.toLowerCase().includes(priority)) btn.classList.add('active');
+            });
+        }
+
+        function toggleMeasurements() {
+            const grid = document.getElementById('measurementsGrid');
+            const toggle = document.getElementById('measureToggle');
+            grid.classList.toggle('hidden');
+            toggle.textContent = grid.classList.contains('hidden') ? 'Show' : 'Hide';
+        }
+
+        function calculateRemaining() {
+            const total = parseFloat(document.getElementById('totalAmount').value) || 0;
+            const advance = parseFloat(document.getElementById('advanceAmount').value) || 0;
+            const remaining = Math.max(0, total - advance);
+            
+            document.getElementById('remainingAmount').value = remaining.toFixed(2);
+            
+            let status, statusClass, statusText;
+            if (advance >= total && total > 0) {
+                status = 'paid';
+                statusClass = 'paid';
+                statusText = '✅ Fully Paid';
+            } else if (advance > 0) {
+                status = 'partial';
+                statusClass = 'partial';
+                statusText = '⚠️ Partial Payment';
+            } else {
+                status = 'unpaid';
+                statusClass = 'unpaid';
+                statusText = '❌ Unpaid';
+            }
+            
+            document.getElementById('paymentStatus').value = status;
+            const display = document.getElementById('paymentStatusDisplay');
+            display.querySelector('.status-indicator').className = `status-indicator ${statusClass}`;
+            document.getElementById('paymentStatusText').textContent = statusText;
+        }
+
+        function updateSummary() {
+            document.getElementById('summaryName').textContent = document.getElementById('name').value || '-';
+            document.getElementById('summaryOrder').textContent = document.getElementById('dressType').value || '-';
+            document.getElementById('summaryTotal').textContent = '₹' + (document.getElementById('totalAmount').value || '0');
+            document.getElementById('summaryDelivery').textContent = document.getElementById('deliveryDate').value || '-';
+        }
+
+        function saveCustomer() {
+            const customer = {
+                id: Date.now().toString(),
+                name: document.getElementById('name').value,
+                phone: document.getElementById('phone').value,
+                category: document.querySelector('input[name="category"]:checked').value,
+                dressType: document.getElementById('dressType').value,
+                orderStatus: document.getElementById('orderStatus').value,
+                priority: document.getElementById('priority').value,
+                deliveryDate: document.getElementById('deliveryDate').value,
+                notes: document.getElementById('notes').value,
+                photo: photoData,
+                createdAt: new Date().toISOString(),
+                measurements: {
+                    chest: document.getElementById('chest').value,
+                    waist: document.getElementById('waist').value,
+                    hip: document.getElementById('hip').value,
+                    length: document.getElementById('length').value,
+                    sleeve: document.getElementById('sleeve').value,
+                    shoulder: document.getElementById('shoulder').value
+                },
+                payment: {
+                    total: parseFloat(document.getElementById('totalAmount').value) || 0,
+                    advance: parseFloat(document.getElementById('advanceAmount').value) || 0,
+                    remaining: parseFloat(document.getElementById('remainingAmount').value) || 0,
+                    status: document.getElementById('paymentStatus').value
+                }
+            };
+            
+            DataManager.addCustomer(customer);
+            showToast('Customer saved successfully!', 'success');
+            triggerConfetti();
+            
+            setTimeout(() => {
+                window.location.href = 'customers.html';
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
